@@ -53,6 +53,12 @@ const uint8_t TARGET_ID6 = 6;
 const uint8_t TARGET_ID7 = 7;
 const uint8_t TARGET_ID8 = 8;
 
+
+
+bool onlyLeftArm = false; //左手のみを使用するかどうか
+int exception = 2200;   //手が全開で脱力する時の閾値 左腕:1800
+
+
 const uint8_t PIN_RTS = 11;
 // const uint8_t DYNAMIXEL_BAUDRATE = 57600;
 
@@ -72,6 +78,7 @@ int targetPos01, targetPos02, targetPos03, targetPos04, targetPos05, targetPos06
 int s1, s2, s3, s4, s5, s6, s7, s8 = 0;
 
 char receivedChar = 0;
+
 
 const int s1diference = 500; //id:01モータの目標値と実測値の差分 この差分を超えるとモーションを終了する
 const int s2diference = 400; //id:02モータの目標値と実測値の差分 この差分を超えるとモーションを終了する
@@ -241,6 +248,9 @@ void setup(){
   Serial.println(ran4);
 
   Serial.println("setup done");
+
+  turnOffLed();
+  mode = 10;
 }
 
 void range(int a1, int a2) {
@@ -272,42 +282,73 @@ void zero() { //フリーの時、落下防止に動きを遅くするフラグ�
 
 void slow() { //条件がONの時、スローにする。ただし腕が全開の時は例外とする
 
-  int exception = 2200;
 
-  if (s08 < exception) { //腕が全開の時の数字
-    // digitalWrite(led01, LOW);
-    // digitalWrite(led02, HIGH);
-    // digitalWrite(led03, LOW);
-  }
-  if (z > 0 && s08 > exception) {
+  // if (s08 < exception) { //腕が全開の時の数字
+  //   // digitalWrite(led01, LOW);
+  //   // digitalWrite(led02, HIGH);
+  //   // digitalWrite(led03, LOW);
+  // }
 
-    dxl.positionPGain(TARGET_ID1, 1);
-    dxl.positionPGain(TARGET_ID2, 1);
-    dxl.positionPGain(TARGET_ID3, 1);
-    dxl.positionPGain(TARGET_ID4, 1);
-    dxl.positionPGain(TARGET_ID6, 1);
-    dxl.positionPGain(TARGET_ID7, 1);
-    dxl.positionPGain(TARGET_ID8, 1);
+  if (onlyLeftArm == true){
+    if (z > 0 && s08 < exception) {
+      dxl.positionPGain(TARGET_ID1, 1);
+      dxl.positionPGain(TARGET_ID2, 1);
+      dxl.positionPGain(TARGET_ID3, 1);
+      dxl.positionPGain(TARGET_ID4, 1);
+      dxl.positionPGain(TARGET_ID6, 1);
+      dxl.positionPGain(TARGET_ID7, 1);
+      dxl.positionPGain(TARGET_ID8, 1);
 
-    int de = 1;
+      int de = 1;
 
-    dxl.torqueEnable(TARGET_ID1, false);
-    dxl.torqueEnable(TARGET_ID2, false);
-    dxl.torqueEnable(TARGET_ID4, false);
-    dxl.torqueEnable(TARGET_ID6, false);
-    delay(de);
-    dxl.torqueEnable(TARGET_ID1, true);
-    dxl.torqueEnable(TARGET_ID2, true);
-    dxl.torqueEnable(TARGET_ID4, true);
-    dxl.torqueEnable(TARGET_ID6, true);
-    delay(12);
+      dxl.torqueEnable(TARGET_ID1, false);
+      dxl.torqueEnable(TARGET_ID2, false);
+      dxl.torqueEnable(TARGET_ID4, false);
+      dxl.torqueEnable(TARGET_ID6, false);
+      delay(de);
+      dxl.torqueEnable(TARGET_ID1, true);
+      dxl.torqueEnable(TARGET_ID2, true);
+      dxl.torqueEnable(TARGET_ID4, true);
+      dxl.torqueEnable(TARGET_ID6, true);
+      delay(12);
 
+    } else {
+      dxl.torqueEnable(TARGET_ID1, false);
+      dxl.torqueEnable(TARGET_ID2, false);
+      dxl.torqueEnable(TARGET_ID4, false);
+      dxl.torqueEnable(TARGET_ID6, false);
+    }
   } else {
-    dxl.torqueEnable(TARGET_ID1, false);
-    dxl.torqueEnable(TARGET_ID2, false);
-    dxl.torqueEnable(TARGET_ID4, false);
-    dxl.torqueEnable(TARGET_ID6, false);
+    if (z > 0 && s08 > exception) {
+      dxl.positionPGain(TARGET_ID1, 1);
+      dxl.positionPGain(TARGET_ID2, 1);
+      dxl.positionPGain(TARGET_ID3, 1);
+      dxl.positionPGain(TARGET_ID4, 1);
+      dxl.positionPGain(TARGET_ID6, 1);
+      dxl.positionPGain(TARGET_ID7, 1);
+      dxl.positionPGain(TARGET_ID8, 1);
+
+      int de = 1;
+
+      dxl.torqueEnable(TARGET_ID1, false);
+      dxl.torqueEnable(TARGET_ID2, false);
+      dxl.torqueEnable(TARGET_ID4, false);
+      dxl.torqueEnable(TARGET_ID6, false);
+      delay(de);
+      dxl.torqueEnable(TARGET_ID1, true);
+      dxl.torqueEnable(TARGET_ID2, true);
+      dxl.torqueEnable(TARGET_ID4, true);
+      dxl.torqueEnable(TARGET_ID6, true);
+      delay(12);
+
+    } else {
+      dxl.torqueEnable(TARGET_ID1, false);
+      dxl.torqueEnable(TARGET_ID2, false);
+      dxl.torqueEnable(TARGET_ID4, false);
+      dxl.torqueEnable(TARGET_ID6, false);
+    }
   }
+  
 }
 
 
@@ -692,35 +733,35 @@ void loop(){
     Serial.print(mode);
     writer();
     turnOffLed();
-    mode = 0;
+    mode = 10;
   } else if (sw02State == LOW && mode == 0){
     mode = 2;
     turnOnLed(led02);
     Serial.print(mode);
     writer();
     turnOffLed();
-    mode = 0;
+    mode = 10;
   } else if (sw03State == LOW && mode == 0){
     mode = 3;
     turnOnLed(led03);
     Serial.print(mode);
     writer();
     turnOffLed();
-    mode = 0;
+    mode = 10;
   } else if (sw04State == LOW && mode == 0){
     mode = 4;
     turnOnLed(led04);
     Serial.print(mode);
     writer();
     turnOffLed();
-    mode = 0;
+    mode = 10;
   } else if (sw05State == LOW && mode == 0){
     mode = 5;
     turnOnLed(led05);
     Serial.print(mode);
     writer();
     turnOffLed();
-    mode = 0;
+    mode = 10;
   }
 
 
@@ -766,4 +807,22 @@ void loop(){
   Serial.print(mode);
   
 
+  if (receivedChar == 10){
+    Serial.println("");
+    Serial.println("10");
+    Serial.println("");
+    dxl.torqueEnable(TARGET_ID1, true);
+    dxl.torqueEnable(TARGET_ID4, true);
+
+    dxl.goalPosition(TARGET_ID1, ran1 - 150);
+    dxl.goalPosition(TARGET_ID4, ran4 - 100);
+    delay(100);
+  }
+
+  if (receivedChar == 11){
+    Serial.println("");
+    Serial.println("11");
+    Serial.println("");
+    slow();
+  }
 }
