@@ -14,8 +14,9 @@ BluetoothSerial SerialBT;
 
 
 // ---- S/W Version ------------------
-#define VERSION_NUMBER  "Ver. 0.3.1"
+#define VERSION_NUMBER  "Ver. 0.3.2"
 // -----------------------------------
+
 
 
 ////////// pin 配置 //////////////////////////
