@@ -14,7 +14,7 @@ BluetoothSerial SerialBT;
 
 
 // ---- S/W Version ------------------
-#define VERSION_NUMBER  "Ver. 0.3.2"
+#define VERSION_NUMBER  "Ver. 0.4.0"
 // -----------------------------------
 
 
@@ -34,7 +34,7 @@ const int sw03 = 12;
 const int sw04 = 13;
 const int sw05 = 33;
 
-const int sw_O = 14;
+const int swAudio = 14;
 
 const int RXD1 = 19;
 const int TXD1 = 18;
@@ -57,7 +57,7 @@ const uint8_t TARGET_ID8 = 8;
 
 
 bool onlyLeftArm = false; //左手のみを使用するかどうか
-int exception = 2200;   //手が全開で脱力する時の閾値 左腕:1800
+int exception = 1900;   //手が全開で脱力する時の閾値 左腕:1800
 
 
 const uint8_t PIN_RTS = 11;
@@ -72,7 +72,7 @@ char buffer[16]; // 数値の一時的な保持のためのバッファ
 
 
 
-bool sw00State, sw01State, sw02State, sw03State, sw04State, sw05State = HIGH;
+bool sw00State, sw01State, sw02State, sw03State, sw04State, sw05State, swAudioState = HIGH;
 
 int targetPos01, targetPos02, targetPos03, targetPos04, targetPos05, targetPos06, targetPos07, targetPos08 = 0;
 
@@ -91,6 +91,11 @@ int ran1, ran2, ran4 = 0;
 int s08 = 0; //腕の角度
 
 int mode = 0; //1~9:モーション録画, 11~19:モーション再生
+int audioMode = 0; //0:初期値, 
+
+int O_time = 0;
+const int O_t = 100;
+
 int past_mode = 0;
 
 
@@ -137,6 +142,7 @@ void readSwitchState(){
   sw03State = digitalRead(sw03);
   sw04State = digitalRead(sw04);
   sw05State = digitalRead(sw05);
+  swAudioState = digitalRead(swAudio);
 }
 
 void Pgain_on(){
@@ -160,99 +166,6 @@ void Pgain_on(){
   }
 }
 
-
-void setup(){
-  DYNAMIXEL_SERIAL.begin(115200);
-  dxl.attach(Serial2, 115200);
-  Serial.begin(115200);
-  SerialBT.begin("OryArm"); // Bluetooth device name
-  Serial.println("The device started, now you can pair it with bluetooth!");
-
-  pinMode(led01, OUTPUT);
-  pinMode(led02, OUTPUT);
-  pinMode(led03, OUTPUT);
-  pinMode(led04, OUTPUT);
-  pinMode(led05, OUTPUT);
-  pinMode(led06, OUTPUT);
-
-  pinMode(sw00, INPUT_PULLUP);
-  pinMode(sw01, INPUT_PULLUP);
-  pinMode(sw02, INPUT_PULLUP);
-  pinMode(sw03, INPUT_PULLUP);
-  pinMode(sw04, INPUT_PULLUP);
-  pinMode(sw05, INPUT_PULLUP);
-
-  digitalWrite(led01, LOW);
-  digitalWrite(led02, LOW);
-  digitalWrite(led03, LOW);
-  digitalWrite(led04, LOW);
-  digitalWrite(led05, LOW);
-  
-  digitalWrite(led01, HIGH); delay(150);
-  digitalWrite(led02, HIGH); delay(150);
-  digitalWrite(led03, HIGH); delay(150);
-  digitalWrite(led04, HIGH); delay(150);
-  digitalWrite(led05, HIGH); delay(300);
-
-  digitalWrite(led01, LOW);
-  digitalWrite(led02, LOW);
-  digitalWrite(led03, LOW);
-  digitalWrite(led04, LOW);
-  digitalWrite(led05, LOW);
-
-  dxl.addModel<DxlModel::X>(TARGET_ID1);
-  dxl.addModel<DxlModel::X>(TARGET_ID2);
-  dxl.addModel<DxlModel::X>(TARGET_ID3);
-  dxl.addModel<DxlModel::X>(TARGET_ID4);
-  dxl.addModel<DxlModel::X>(TARGET_ID5);
-  dxl.addModel<DxlModel::X>(TARGET_ID6);
-  dxl.addModel<DxlModel::X>(TARGET_ID7);
-  dxl.addModel<DxlModel::X>(TARGET_ID8);
-
-  Serial.println(VERSION_NUMBER);
-
-  delay(2000);
-
-  dxl.torqueEnable(TARGET_ID1, false);
-  dxl.torqueEnable(TARGET_ID2, false);
-  dxl.torqueEnable(TARGET_ID3, false);
-  dxl.torqueEnable(TARGET_ID4, false);
-  dxl.torqueEnable(TARGET_ID5, false);
-  dxl.torqueEnable(TARGET_ID6, false);
-  dxl.torqueEnable(TARGET_ID7, false);
-  dxl.torqueEnable(TARGET_ID8, false);
-
-  Pgain_on();
-
-
-  if (!SPIFFS.begin(true)) {
-    Serial.println("SPIFFSの初期化に失敗しました");
-    digitalWrite(led01, HIGH);
-    digitalWrite(led02, LOW);
-    digitalWrite(led03, HIGH);
-    return;
-  }
-  Serial.println("SPIFFSの初期化に成功しました");
-  digitalWrite(led01, LOW);
-  digitalWrite(led02, HIGH);
-  digitalWrite(led03, LOW);
-
-  
-  ran1 = dxl.presentPosition(TARGET_ID1); delay(5);
-  ran2 = dxl.presentPosition(TARGET_ID2); delay(5);
-  ran4 = dxl.presentPosition(TARGET_ID4); delay(5);
-
-  Serial.print(ran1);
-  Serial.print(",");
-  Serial.print(ran2);
-  Serial.print(",");
-  Serial.println(ran4);
-
-  Serial.println("setup done");
-
-  turnOffLed();
-  mode = 10;
-}
 
 void range(int a1, int a2) {
   int r = 230;
@@ -698,6 +611,9 @@ void reader(){
     mode = 0;
     zero();
     slow();
+
+    
+
   }
 
   turnOffLed();
@@ -706,124 +622,352 @@ void reader(){
 
 
 
-void loop(){
-  Pgain_on();
-  readSwitchState();
+//オーディオインタフェースモード
+void audioLoop(){
   delay(10);
-  demo();
-  delay(10);
+  O_time++;
 
-  if (SerialBT.available()) {
-    receivedChar = SerialBT.read();
-  }
-
-  if (sw00State == LOW && mode == 0){
-    mode = 10;
-    turnOffLed();
-    delay(500);
-  } else if (sw00State == LOW && mode == 10){
-    mode = 0;
-    turnOnAllLed();
-    delay(500);
-  }
-
-
-  if (sw01State == LOW && mode == 0){
-    mode = 1;
-    turnOnLed(led01);
-    Serial.print(mode);
-    writer();
-    turnOffLed();
-    mode = 10;
-  } else if (sw02State == LOW && mode == 0){
-    mode = 2;
-    turnOnLed(led02);
-    Serial.print(mode);
-    writer();
-    turnOffLed();
-    mode = 10;
-  } else if (sw03State == LOW && mode == 0){
-    mode = 3;
-    turnOnLed(led03);
-    Serial.print(mode);
-    writer();
-    turnOffLed();
-    mode = 10;
-  } else if (sw04State == LOW && mode == 0){
-    mode = 4;
-    turnOnLed(led04);
-    Serial.print(mode);
-    writer();
-    turnOffLed();
-    mode = 10;
-  } else if (sw05State == LOW && mode == 0){
-    mode = 5;
-    turnOnLed(led05);
-    Serial.print(mode);
-    writer();
-    turnOffLed();
-    mode = 10;
-  }
-
-
-
-
-
-  if ((sw01State == LOW && mode == 10) || receivedChar == 49){  //ASCII 1
-    mode = 11;
-    turnOffLed();
-    reader();
-    mode = 10;
-    // turnOnAllLed();
-    receivedChar = 0;
-  } else if ((sw02State == LOW && mode == 10) || receivedChar == 50){ //ASCII 2
-    mode = 12;
-    turnOffLed();
-    reader();
-    mode = 10;
-    // turnOnAllLed();
-    receivedChar = 0;
-  }else if ((sw03State == LOW && mode == 10) || receivedChar == 51){ //ASCII 3
-    mode = 13;
-    turnOffLed();
-    reader();
-    mode = 10;
-    // turnOnAllLed();
-    receivedChar = 0;
-  } else if ((sw04State == LOW && mode == 10) || receivedChar == 52){ //ASCII 4
-    mode = 14;
-    turnOffLed();
-    reader();
-    mode = 10;
-    // turnOnAllLed();
-    receivedChar = 0;
-  } else if ((sw05State == LOW && mode == 10) || receivedChar == 53){ //ASCII 5
-    mode = 15;
-    turnOffLed();
-    reader();
-    mode = 10;
-    // turnOnAllLed();
-    receivedChar = 0;
-  }
-  Serial.print(mode);
+  
   
 
-  if (receivedChar == 10){
-    Serial.println("");
-    Serial.println("10");
-    Serial.println("");
-    dxl.torqueEnable(TARGET_ID1, true);
-    dxl.torqueEnable(TARGET_ID4, true);
+  Serial.print("audioMode = ");
+  Serial.println(audioMode);
+  
+  if (audioMode == 1){
+    digitalWrite(led01, HIGH);
+    digitalWrite(led02, HIGH);
+    digitalWrite(led03, HIGH);
+    delay(1000);
+    audioMode = 2;
+  }
+  
+  swAudioState = digitalRead(swAudio);  //場所を変えない
 
-    dxl.goalPosition(TARGET_ID1, ran1 - 150);
-    dxl.goalPosition(TARGET_ID4, ran4 - 100);
-    delay(100);
+  if (audioMode == 2){
+    digitalWrite(led01, HIGH);
+    digitalWrite(led02, LOW);
+    digitalWrite(led03, LOW);
+    if (swAudioState == LOW){
+      mode = 11;
+      audioMode = -1;
+      O_time = 0;
+    }
   }
 
-  if (receivedChar == 11){
-    Serial.println("");
-    Serial.println("11");
-    Serial.println("");
-    slow();
+  if (audioMode == 3){
+    digitalWrite(led01, LOW);
+    digitalWrite(led02, HIGH);
+    digitalWrite(led03, LOW);
+      if (swAudioState == LOW){
+      mode = 12;
+      audioMode = -1;
+      O_time = 0;
+    }
+  }
+
+  if (audioMode == 4){
+    digitalWrite(led01, LOW);
+    digitalWrite(led02, LOW);
+    digitalWrite(led03, HIGH);
+    if(swAudioState == LOW){
+      mode = 13;
+      audioMode = -1;
+      O_time = 0;
+    }
+  }
+
+  if(audioMode == 5){
+    audioMode = 0;
+    turnOffLed();
+  }
+
+  // if (audioMode == -1){
+  //   if (swAudioState == HIGH){
+  //     audioMode = 0;
+  //     O_time = 0;
+  //   }
+  // }
+  
+  if (audioMode > 1 && O_time > O_t){
+    audioMode++;
+    O_time = 0;
+  }
+
+  if (mode > 10){
+    reader();
+  }
+
+}
+
+
+
+void setup(){
+  DYNAMIXEL_SERIAL.begin(115200);
+  dxl.attach(Serial2, 115200);
+  Serial.begin(115200);
+  SerialBT.begin("OryArm"); // Bluetooth device name
+  Serial.println("The device started, now you can pair it with bluetooth!");
+
+  pinMode(led01, OUTPUT);
+  pinMode(led02, OUTPUT);
+  pinMode(led03, OUTPUT);
+  pinMode(led04, OUTPUT);
+  pinMode(led05, OUTPUT);
+  pinMode(led06, OUTPUT);
+
+  pinMode(sw00, INPUT_PULLUP);
+  pinMode(sw01, INPUT_PULLUP);
+  pinMode(sw02, INPUT_PULLUP);
+  pinMode(sw03, INPUT_PULLUP);
+  pinMode(sw04, INPUT_PULLUP);
+  pinMode(sw05, INPUT_PULLUP);
+
+  digitalWrite(led01, LOW);
+  digitalWrite(led02, LOW);
+  digitalWrite(led03, LOW);
+  digitalWrite(led04, LOW);
+  digitalWrite(led05, LOW);
+  
+  digitalWrite(led01, HIGH); delay(150);
+  digitalWrite(led02, HIGH); delay(150);
+  digitalWrite(led03, HIGH); delay(150);
+  digitalWrite(led04, HIGH); delay(150);
+  digitalWrite(led05, HIGH); delay(300);
+
+  digitalWrite(led01, LOW);
+  digitalWrite(led02, LOW);
+  digitalWrite(led03, LOW);
+  digitalWrite(led04, LOW);
+  digitalWrite(led05, LOW);
+
+  dxl.addModel<DxlModel::X>(TARGET_ID1);
+  dxl.addModel<DxlModel::X>(TARGET_ID2);
+  dxl.addModel<DxlModel::X>(TARGET_ID3);
+  dxl.addModel<DxlModel::X>(TARGET_ID4);
+  dxl.addModel<DxlModel::X>(TARGET_ID5);
+  dxl.addModel<DxlModel::X>(TARGET_ID6);
+  dxl.addModel<DxlModel::X>(TARGET_ID7);
+  dxl.addModel<DxlModel::X>(TARGET_ID8);
+
+  Serial.println(VERSION_NUMBER);
+
+  delay(2000);
+
+  dxl.torqueEnable(TARGET_ID1, false);
+  dxl.torqueEnable(TARGET_ID2, false);
+  dxl.torqueEnable(TARGET_ID3, false);
+  dxl.torqueEnable(TARGET_ID4, false);
+  dxl.torqueEnable(TARGET_ID5, false);
+  dxl.torqueEnable(TARGET_ID6, false);
+  dxl.torqueEnable(TARGET_ID7, false);
+  dxl.torqueEnable(TARGET_ID8, false);
+
+  Pgain_on();
+
+
+  if (!SPIFFS.begin(true)) {
+    Serial.println("SPIFFSの初期化に失敗しました");
+    digitalWrite(led01, HIGH);
+    digitalWrite(led02, LOW);
+    digitalWrite(led03, HIGH);
+    return;
+  }
+  Serial.println("SPIFFSの初期化に成功しました");
+  digitalWrite(led01, LOW);
+  digitalWrite(led02, HIGH);
+  digitalWrite(led03, LOW);
+
+  
+  ran1 = dxl.presentPosition(TARGET_ID1); delay(5);
+  ran2 = dxl.presentPosition(TARGET_ID2); delay(5);
+  ran4 = dxl.presentPosition(TARGET_ID4); delay(5);
+
+  Serial.print(ran1);
+  Serial.print(",");
+  Serial.print(ran2);
+  Serial.print(",");
+  Serial.println(ran4);
+
+  Serial.println("setup done");
+
+  turnOffLed();
+  mode = 10;
+}
+
+
+
+
+void loop(){
+  
+  readSwitchState();
+
+  if (audioMode > 0){
+    audioLoop();
+  } else {
+
+    Serial.print("audioMode = ");
+    Serial.println(audioMode);
+
+    Pgain_on();
+    delay(10);
+    // demo();
+    delay(10);
+
+    if (swAudioState == LOW){
+      audioMode = 1;
+    }
+
+    if (SerialBT.available()) {
+      receivedChar = SerialBT.read();
+    }
+
+    if (sw00State == LOW && mode == 0){
+      mode = 10;
+      turnOffLed();
+      delay(500);
+    } else if (sw00State == LOW && mode == 10){
+      mode = 0;
+      turnOnAllLed();
+      delay(500);
+    }
+
+
+
+    if (sw01State == LOW && mode == 0){
+      mode = 1;
+      turnOnLed(led01);
+      Serial.print(mode);
+      writer();
+      turnOffLed();
+      mode = 10;
+    } else if (sw02State == LOW && mode == 0){
+      mode = 2;
+      turnOnLed(led02);
+      Serial.print(mode);
+      writer();
+      turnOffLed();
+      mode = 10;
+    } else if (sw03State == LOW && mode == 0){
+      mode = 3;
+      turnOnLed(led03);
+      Serial.print(mode);
+      writer();
+      turnOffLed();
+      mode = 10;
+    } else if (sw04State == LOW && mode == 0){
+      mode = 4;
+      turnOnLed(led04);
+      Serial.print(mode);
+      writer();
+      turnOffLed();
+      mode = 10;
+    } else if (sw05State == LOW && mode == 0){
+      mode = 5;
+      turnOnLed(led05);
+      Serial.print(mode);
+      writer();
+      turnOffLed();
+      mode = 10;
+    }
+
+
+
+
+    // if (mode == 0){
+    //   if (sw01State == LOW){
+    //     mode = 1;
+    //     turnOnLed(led01);
+    //   } else if (sw02State == LOW){
+    //     mode = 2;
+    //     turnOnLed(led02);
+    //   } else if (sw03State == LOW){
+    //     mode = 3;
+    //     turnOnLed(led03);
+    //   } else if (sw04State == LOW){
+    //     mode = 4;
+    //     turnOnLed(led04);
+    //   } else if (sw05State == LOW){
+    //     mode = 5;
+    //     turnOnLed(led05);
+    //   }
+
+    //   Serial.print(mode);
+    //   writer();
+    //   turnOffLed();
+    //   mode = 10;
+      
+    // }
+
+
+
+
+
+    if ((sw01State == LOW && mode == 10) || receivedChar == 49){  //ASCII 1
+      mode = 11;
+      turnOffLed();
+      reader();
+      mode = 10;
+      // turnOnAllLed();
+      receivedChar = 0;
+    } else if ((sw02State == LOW && mode == 10) || receivedChar == 50){ //ASCII 2
+      mode = 12;
+      turnOffLed();
+      reader();
+      mode = 10;
+      // turnOnAllLed();
+      receivedChar = 0;
+    }else if ((sw03State == LOW && mode == 10) || receivedChar == 51){ //ASCII 3
+      mode = 13;
+      turnOffLed();
+      reader();
+      mode = 10;
+      // turnOnAllLed();
+      receivedChar = 0;
+    } else if ((sw04State == LOW && mode == 10) || receivedChar == 52){ //ASCII 4
+      mode = 14;
+      turnOffLed();
+      reader();
+      mode = 10;
+      // turnOnAllLed();
+      receivedChar = 0;
+    } else if ((sw05State == LOW && mode == 10) || receivedChar == 53){ //ASCII 5
+      mode = 15;
+      turnOffLed();
+      reader();
+      mode = 10;
+      // turnOnAllLed();
+      receivedChar = 0;
+    }
+
+    dxl.torqueEnable(TARGET_ID1, true);
+    dxl.torqueEnable(TARGET_ID2, true);
+    dxl.torqueEnable(TARGET_ID3, true);
+    dxl.torqueEnable(TARGET_ID4, true);
+    dxl.torqueEnable(TARGET_ID5, true);
+    dxl.torqueEnable(TARGET_ID6, true);
+    dxl.torqueEnable(TARGET_ID7, true);
+    dxl.torqueEnable(TARGET_ID8, true);
+
+    
+    
+
+    // if (receivedChar == 10){
+    //   Serial.println("");
+    //   Serial.println("10");
+    //   Serial.println("");
+    //   dxl.torqueEnable(TARGET_ID1, true);
+    //   dxl.torqueEnable(TARGET_ID4, true);
+
+    //   dxl.goalPosition(TARGET_ID1, ran1 - 150);
+    //   dxl.goalPosition(TARGET_ID4, ran4 - 100);
+    // }
+
+    // if (receivedChar == 11){
+    //   Serial.println("");
+    //   Serial.println("11");
+    //   Serial.println("");
+    //   delay(500);
+    //   slow();
+    // }
   }
 }
