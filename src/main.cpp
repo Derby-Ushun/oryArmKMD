@@ -630,8 +630,8 @@ void audioLoop(){
   
   
 
-  Serial.print("audioMode = ");
-  Serial.println(audioMode);
+  // Serial.print("audioMode = ");
+  // Serial.println(audioMode);
   
   if (audioMode == 1){
     digitalWrite(led01, HIGH);
@@ -705,7 +705,7 @@ void setup(){
   DYNAMIXEL_SERIAL.begin(115200);
   dxl.attach(Serial2, 115200);
   Serial.begin(115200);
-  SerialBT.begin("OryArm"); // Bluetooth device name
+  SerialBT.begin("CartOryArm"); // Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
 
   pinMode(led01, OUTPUT);
@@ -805,12 +805,12 @@ void loop(){
     audioLoop();
   } else {
 
-    Serial.print("audioMode = ");
-    Serial.println(audioMode);
+    // Serial.print("audioMode = ");
+    // Serial.println(audioMode);
 
     Pgain_on();
     delay(10);
-    // demo();
+    demo();
     delay(10);
 
     if (swAudioState == LOW){
