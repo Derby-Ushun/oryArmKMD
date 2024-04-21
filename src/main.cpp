@@ -433,190 +433,192 @@ void writer(){
 }
 
 void reader(){
-  // ファイルの読み取り
-  Serial.print("mode = " + mode);
 
-  if (mode == 1 || mode == 11) {
-    digitalWrite(led01, HIGH);
-    file = SPIFFS.open("/test1.txt");
-    if (!file) {
-      Serial.println("ファイルの読み取りに失敗しました");
-      return;
-    }
-  }
-  if (mode == 2 || mode == 12) {
-    digitalWrite(led02, HIGH);
-    file = SPIFFS.open("/test2.txt");
-    if (!file) {
-      Serial.println("ファイルの読み取りに失敗しました");
-      return;
-    }
-  }
-  if (mode == 3 || mode == 13) {
-    digitalWrite(led03, HIGH);
-    file = SPIFFS.open("/test3.txt");
-    if (!file) {
-      Serial.println("ファイルの読み取りに失敗しました");
-      return;
-    }
-  }
-  if (mode == 4 || mode == 14) {
-    digitalWrite(led04, HIGH);
-    file = SPIFFS.open("/test4.txt");
-    if (!file) {
-      Serial.println("ファイルの読み取りに失敗しました");
-      return;
-    }
-  }
-  if (mode == 5 || mode == 15) {
-    digitalWrite(led05, HIGH);
-    file = SPIFFS.open("/test5.txt");
-    if (!file) {
-      Serial.println("ファイルの読み取りに失敗しました");
-      return;
-    }
-  }
+  if (mode > 10){
 
-  // ファイルの内容を格納する配列
-  int index = 0;
-  while (file.available()) {
-    int pos = 0;
-    while (true) {
-      char c = file.read();
-      if (c == ',' || c == '\n' || c == -1) {
-        buffer[pos] = '\0'; // 終端文字を追加
-        values[index++] = atoi(buffer); // char配列を整数に変換して配列に格納
-        pos = 0; // バッファの位置をリセット
+    // ファイルの読み取り
+    Serial.print("mode = " + mode);
 
-        if (c == '\n' || c == -1) {
-          break; // 行の終わりまたはファイルの終わり
+    if (mode == 11) {
+      digitalWrite(led01, HIGH);
+      file = SPIFFS.open("/test1.txt");
+      if (!file) {
+        Serial.println("ファイルの読み取りに失敗しました");
+        return;
+      }
+    }
+    if (mode == 12) {
+      digitalWrite(led02, HIGH);
+      file = SPIFFS.open("/test2.txt");
+      if (!file) {
+        Serial.println("ファイルの読み取りに失敗しました");
+        return;
+      }
+    }
+    if (mode == 13) {
+      digitalWrite(led03, HIGH);
+      file = SPIFFS.open("/test3.txt");
+      if (!file) {
+        Serial.println("ファイルの読み取りに失敗しました");
+        return;
+      }
+    }
+    if (mode == 14) {
+      digitalWrite(led04, HIGH);
+      file = SPIFFS.open("/test4.txt");
+      if (!file) {
+        Serial.println("ファイルの読み取りに失敗しました");
+        return;
+      }
+    }
+    if (mode == 15) {
+      digitalWrite(led05, HIGH);
+      file = SPIFFS.open("/test5.txt");
+      if (!file) {
+        Serial.println("ファイルの読み取りに失敗しました");
+        return;
+      }
+    }
+
+    // ファイルの内容を格納する配列
+    int index = 0;
+    while (file.available()) {
+      int pos = 0;
+      while (true) {
+        char c = file.read();
+        if (c == ',' || c == '\n' || c == -1) {
+          buffer[pos] = '\0'; // 終端文字を追加
+          values[index++] = atoi(buffer); // char配列を整数に変換して配列に格納
+          pos = 0; // バッファの位置をリセット
+
+          if (c == '\n' || c == -1) {
+            break; // 行の終わりまたはファイルの終わり
+          }
+        } else {
+          buffer[pos++] = c; // バッファに文字を追加
         }
-      } else {
-        buffer[pos++] = c; // バッファに文字を追加
       }
     }
-  }
-  file.close();
+    file.close();
 
-  mode = 255;
-  Serial.print(z);
-  if (z == 0)mode = 256;
-  if (mode == 255 )slow();
-  if (mode == 256) {
+    mode = 255;
+    Serial.print(z);
+    if (z == 0)mode = 256;
+    if (mode == 255 )slow();
+    if (mode == 256) {
 
-    dxl.torqueEnable(TARGET_ID1, true);
-    dxl.torqueEnable(TARGET_ID2, true);
-    dxl.torqueEnable(TARGET_ID3, true);
-    dxl.torqueEnable(TARGET_ID4, true);
-    dxl.torqueEnable(TARGET_ID5, true);
-    dxl.torqueEnable(TARGET_ID6, true);
-    dxl.torqueEnable(TARGET_ID7, true);
-    dxl.torqueEnable(TARGET_ID8, true);
+      dxl.torqueEnable(TARGET_ID1, true);
+      dxl.torqueEnable(TARGET_ID2, true);
+      dxl.torqueEnable(TARGET_ID3, true);
+      dxl.torqueEnable(TARGET_ID4, true);
+      dxl.torqueEnable(TARGET_ID5, true);
+      dxl.torqueEnable(TARGET_ID6, true);
+      dxl.torqueEnable(TARGET_ID7, true);
+      dxl.torqueEnable(TARGET_ID8, true);
 
-    // シリアルモニタにデータを表示&モータ実行
-    for (int i = 0; i < numRecords; i++) {
+      // シリアルモニタにデータを表示&モータ実行
+      for (int i = 0; i < numRecords; i++) {
 
-      int ss1 = values[i * number];
-      int ss2 = values[i * number + 1];
-      int ss3 = values[i * number + 2];
-      int ss4 = values[i * number + 3];
-      int ss5 = values[i * number + 4];
-      int ss6 = values[i * number + 5];
-      int ss7 = values[i * number + 6];
-      int ss8 = values[i * number + 7];
+        int ss1 = values[i * number];
+        int ss2 = values[i * number + 1];
+        int ss3 = values[i * number + 2];
+        int ss4 = values[i * number + 3];
+        int ss5 = values[i * number + 4];
+        int ss6 = values[i * number + 5];
+        int ss7 = values[i * number + 6];
+        int ss8 = values[i * number + 7];
 
-      // delay(5);
-      // Serial.print(z);
-      Serial.print("フレーム ");
-      Serial.print(i + 1);
-      Serial.println(": ");
-      // Serial.print("目標 = ");
-      // Serial.print(ss1); Serial.print(", ");
-      // Serial.print(ss2); Serial.print(", ");
-      // Serial.print(ss3); Serial.print(", ");
-      // Serial.print(ss4); Serial.print(", ");
-      // Serial.print(ss5); Serial.print(", ");
-      // Serial.print(ss6); Serial.print(", ");
-      // Serial.print(ss7); Serial.print(", ");
-      // Serial.print(ss8); Serial.print(" :");
-      Serial.println(mode);
+        // delay(5);
+        // Serial.print(z);
+        Serial.print("フレーム ");
+        Serial.print(i + 1);
+        Serial.println(": ");
+        // Serial.print("目標 = ");
+        // Serial.print(ss1); Serial.print(", ");
+        // Serial.print(ss2); Serial.print(", ");
+        // Serial.print(ss3); Serial.print(", ");
+        // Serial.print(ss4); Serial.print(", ");
+        // Serial.print(ss5); Serial.print(", ");
+        // Serial.print(ss6); Serial.print(", ");
+        // Serial.print(ss7); Serial.print(", ");
+        // Serial.print(ss8); Serial.print(" :");
+        Serial.println(mode);
 
-      //実測値計測
-      int de = 2; delay(de);
-      s1 = dxl.presentPosition(TARGET_ID1); delay(de);
-      s2 = dxl.presentPosition(TARGET_ID2); delay(de);
-      s3 = dxl.presentPosition(TARGET_ID3); delay(de);
-      s4 = dxl.presentPosition(TARGET_ID4); delay(de);
-      s5 = dxl.presentPosition(TARGET_ID5); delay(de);
-      s6 = dxl.presentPosition(TARGET_ID6); delay(de);
-      s7 = dxl.presentPosition(TARGET_ID7); delay(de);
-      s8 = dxl.presentPosition(TARGET_ID8);
+        //実測値計測
+        int de = 2; delay(de);
+        s1 = dxl.presentPosition(TARGET_ID1); delay(de);
+        s2 = dxl.presentPosition(TARGET_ID2); delay(de);
+        s3 = dxl.presentPosition(TARGET_ID3); delay(de);
+        s4 = dxl.presentPosition(TARGET_ID4); delay(de);
+        s5 = dxl.presentPosition(TARGET_ID5); delay(de);
+        s6 = dxl.presentPosition(TARGET_ID6); delay(de);
+        s7 = dxl.presentPosition(TARGET_ID7); delay(de);
+        s8 = dxl.presentPosition(TARGET_ID8);
 
-      // Serial.print("実測 = ");
-      // Serial.print(s1); Serial.print(", ");
-      // Serial.print(s2); Serial.print(", ");
-      // Serial.print(s3); Serial.print(", ");
-      // Serial.print(s4); Serial.print(", ");
-      // Serial.print(s5); Serial.print(", ");
-      // Serial.print(s6); Serial.print(", ");
-      // Serial.print(s7); Serial.print(", ");
-      // Serial.println(s8);
+        // Serial.print("実測 = ");
+        // Serial.print(s1); Serial.print(", ");
+        // Serial.print(s2); Serial.print(", ");
+        // Serial.print(s3); Serial.print(", ");
+        // Serial.print(s4); Serial.print(", ");
+        // Serial.print(s5); Serial.print(", ");
+        // Serial.print(s6); Serial.print(", ");
+        // Serial.print(s7); Serial.print(", ");
+        // Serial.println(s8);
 
-      Serial.print("差分 = ");
-      Serial.print(ss1 - s1); Serial.print(", ");
-      Serial.print(ss2 - s2); Serial.print(", ");
-      Serial.print(ss3 - s3); Serial.print(", ");
-      Serial.print(ss4 - s4); Serial.print(", ");
-      Serial.print(ss5 - s5); Serial.print(", ");
-      Serial.print(ss6 - s6); Serial.print(", ");
-      Serial.print(ss7 - s7); Serial.print(", ");
-      Serial.println(ss8 - s8);
+        Serial.print("差分 = ");
+        Serial.print(ss1 - s1); Serial.print(", ");
+        Serial.print(ss2 - s2); Serial.print(", ");
+        Serial.print(ss3 - s3); Serial.print(", ");
+        Serial.print(ss4 - s4); Serial.print(", ");
+        Serial.print(ss5 - s5); Serial.print(", ");
+        Serial.print(ss6 - s6); Serial.print(", ");
+        Serial.print(ss7 - s7); Serial.print(", ");
+        Serial.println(ss8 - s8);
 
-      
-      
-      sw00State = digitalRead(sw00);
-      if (abs(ss1 - s1) > s1diference || abs(ss2 - s2) > s2diference || abs(ss4 - s4) > s4diference || sw00 == LOW) {
-        digitalWrite(led01, HIGH); digitalWrite(led02, LOW); digitalWrite(led03, LOW);
-        digitalWrite(led04, LOW); digitalWrite(led05, HIGH);
-        delay(200);
-        digitalWrite(led01, LOW); digitalWrite(led05, LOW);
-        mode = 0;
-        break;
+        
+        
+        sw00State = digitalRead(sw00);
+        if (abs(ss1 - s1) > s1diference || abs(ss2 - s2) > s2diference || abs(ss4 - s4) > s4diference || sw00 == LOW) {
+          digitalWrite(led01, HIGH); digitalWrite(led02, LOW); digitalWrite(led03, LOW);
+          digitalWrite(led04, LOW); digitalWrite(led05, HIGH);
+          delay(200);
+          digitalWrite(led01, LOW); digitalWrite(led05, LOW);
+          mode = 0;
+          break;
+        }
+
+        range(s1, ran1);
+        range(s2, ran2);
+        range(s4, ran4);
+
+        //モータへ送信
+        dxl.goalPosition(TARGET_ID1, ss1);
+        dxl.goalPosition(TARGET_ID2, ss2);
+        dxl.goalPosition(TARGET_ID3, ss3);
+        dxl.goalPosition(TARGET_ID4, ss4);
+        dxl.goalPosition(TARGET_ID5, ss5);
+        dxl.goalPosition(TARGET_ID6, ss6);
+        dxl.goalPosition(TARGET_ID7, ss7);
+        dxl.goalPosition(TARGET_ID8, ss8 + 15);
+
       }
 
-      range(s1, ran1);
-      range(s2, ran2);
-      range(s4, ran4);
-
-      //モータへ送信
-      dxl.goalPosition(TARGET_ID1, ss1);
-      dxl.goalPosition(TARGET_ID2, ss2);
-      dxl.goalPosition(TARGET_ID3, ss3);
-      dxl.goalPosition(TARGET_ID4, ss4);
-      dxl.goalPosition(TARGET_ID5, ss5);
-      dxl.goalPosition(TARGET_ID6, ss6);
-      dxl.goalPosition(TARGET_ID7, ss7);
-      dxl.goalPosition(TARGET_ID8, ss8 + 15);
-
+      //dxl.torqueEnable(TARGET_ID1, false);
+      //dxl.torqueEnable(TARGET_ID2, false);
+      dxl.torqueEnable(TARGET_ID3, false);
+      //dxl.torqueEnable(TARGET_ID4, false);
+      dxl.torqueEnable(TARGET_ID5, false);
+      dxl.torqueEnable(TARGET_ID6, false);
+      dxl.torqueEnable(TARGET_ID7, false);
+      dxl.torqueEnable(TARGET_ID8, false);
+      mode = 0;
+      zero();
+      slow();
     }
 
-    //dxl.torqueEnable(TARGET_ID1, false);
-    //dxl.torqueEnable(TARGET_ID2, false);
-    dxl.torqueEnable(TARGET_ID3, false);
-    //dxl.torqueEnable(TARGET_ID4, false);
-    dxl.torqueEnable(TARGET_ID5, false);
-    dxl.torqueEnable(TARGET_ID6, false);
-    dxl.torqueEnable(TARGET_ID7, false);
-    dxl.torqueEnable(TARGET_ID8, false);
-    mode = 0;
-    zero();
-    slow();
-
-    
+    turnOffLed();
 
   }
-
-  turnOffLed();
 
 }
 
@@ -772,12 +774,13 @@ void setup(){
     digitalWrite(led03, HIGH);
     return;
   }
+
   Serial.println("SPIFFSの初期化に成功しました");
   digitalWrite(led01, LOW);
   digitalWrite(led02, HIGH);
   digitalWrite(led03, LOW);
 
-  
+
   ran1 = dxl.presentPosition(TARGET_ID1); delay(5);
   ran2 = dxl.presentPosition(TARGET_ID2); delay(5);
   ran4 = dxl.presentPosition(TARGET_ID4); delay(5);
@@ -836,39 +839,23 @@ void loop(){
     if (sw01State == LOW && mode == 0){
       mode = 1;
       turnOnLed(led01);
-      Serial.print(mode);
-      writer();
-      turnOffLed();
-      mode = 10;
     } else if (sw02State == LOW && mode == 0){
       mode = 2;
       turnOnLed(led02);
-      Serial.print(mode);
-      writer();
-      turnOffLed();
-      mode = 10;
     } else if (sw03State == LOW && mode == 0){
       mode = 3;
       turnOnLed(led03);
-      Serial.print(mode);
-      writer();
-      turnOffLed();
-      mode = 10;
     } else if (sw04State == LOW && mode == 0){
       mode = 4;
       turnOnLed(led04);
-      Serial.print(mode);
-      writer();
-      turnOffLed();
-      mode = 10;
     } else if (sw05State == LOW && mode == 0){
       mode = 5;
       turnOnLed(led05);
-      Serial.print(mode);
-      writer();
-      turnOffLed();
-      mode = 10;
     }
+    Serial.print(mode);
+    writer();
+    turnOffLed();
+    mode = 10;
 
 
 
@@ -904,40 +891,19 @@ void loop(){
 
     if ((sw01State == LOW && mode == 10) || receivedChar == 49){  //ASCII 1
       mode = 11;
-      turnOffLed();
-      reader();
-      mode = 10;
-      // turnOnAllLed();
-      receivedChar = 0;
     } else if ((sw02State == LOW && mode == 10) || receivedChar == 50){ //ASCII 2
       mode = 12;
-      turnOffLed();
-      reader();
-      mode = 10;
-      // turnOnAllLed();
-      receivedChar = 0;
     }else if ((sw03State == LOW && mode == 10) || receivedChar == 51){ //ASCII 3
       mode = 13;
-      turnOffLed();
-      reader();
-      mode = 10;
-      // turnOnAllLed();
-      receivedChar = 0;
     } else if ((sw04State == LOW && mode == 10) || receivedChar == 52){ //ASCII 4
       mode = 14;
-      turnOffLed();
-      reader();
-      mode = 10;
-      // turnOnAllLed();
-      receivedChar = 0;
     } else if ((sw05State == LOW && mode == 10) || receivedChar == 53){ //ASCII 5
       mode = 15;
-      turnOffLed();
-      reader();
-      mode = 10;
-      // turnOnAllLed();
-      receivedChar = 0;
     }
+    turnOffLed();
+    reader();
+    mode = 10;
+    receivedChar = 0;
 
     dxl.torqueEnable(TARGET_ID1, true);
     dxl.torqueEnable(TARGET_ID2, true);
@@ -948,26 +914,5 @@ void loop(){
     dxl.torqueEnable(TARGET_ID7, true);
     dxl.torqueEnable(TARGET_ID8, true);
 
-    
-    
-
-    // if (receivedChar == 10){
-    //   Serial.println("");
-    //   Serial.println("10");
-    //   Serial.println("");
-    //   dxl.torqueEnable(TARGET_ID1, true);
-    //   dxl.torqueEnable(TARGET_ID4, true);
-
-    //   dxl.goalPosition(TARGET_ID1, ran1 - 150);
-    //   dxl.goalPosition(TARGET_ID4, ran4 - 100);
-    // }
-
-    // if (receivedChar == 11){
-    //   Serial.println("");
-    //   Serial.println("11");
-    //   Serial.println("");
-    //   delay(500);
-    //   slow();
-    // }
   }
 }
