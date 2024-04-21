@@ -14,7 +14,7 @@ BluetoothSerial SerialBT;
 
 
 // ---- S/W Version ------------------
-#define VERSION_NUMBER  "Ver. 0.4.0"
+#define VERSION_NUMBER  "Ver. 0.4.1"
 // -----------------------------------
 
 
