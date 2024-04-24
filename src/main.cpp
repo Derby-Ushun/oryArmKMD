@@ -14,7 +14,7 @@ BluetoothSerial SerialBT;
 
 
 // ---- S/W Version ------------------
-#define VERSION_NUMBER  "Ver. 0.5.0"
+#define VERSION_NUMBER  "Ver. 0.5.1"
 // -----------------------------------
 
 
@@ -57,7 +57,9 @@ const uint8_t TARGET_ID8 = 8;
 
 
 bool onlyLeftArm = false; //左手のみを使用するかどうか
-int exception = 1900;   //手が全開で脱力する時の閾値 左腕:1800
+
+bool openHand = false; //手を全開にしたかどうか
+const int exception = 3000;   //手が全開で脱力する時の閾値 左腕:1800 カート用腕:3000
 
 
 const uint8_t PIN_RTS = 11;
@@ -90,7 +92,7 @@ int ran1, ran2, ran4 = 0;
 
 int s08 = 0; //腕の角度
 
-int mode = 0; //1~9:モーション録画, 11~19:モーション再生
+int mode = 10; //1~9:モーション録画, 11~19:モーション再生
 int audioMode = 0; //0:初期値, 
 
 int O_time = 0;
@@ -196,14 +198,18 @@ void zero() { //フリーの時、落下防止に動きを遅くするフラグ�
 
 void slow() { //条件がONの時、スローにする。ただし腕が全開の時は例外とする
 
-
-  // if (s08 < exception) { //腕が全開の時の数字
-  //   // digitalWrite(led01, LOW);
-  //   // digitalWrite(led02, HIGH);
-  //   // digitalWrite(led03, LOW);
-  // }
-
   if (onlyLeftArm == true){
+    if (s08 > exception) { //腕が全開の時の数字
+    digitalWrite(led01, LOW);
+    digitalWrite(led02, HIGH);
+    digitalWrite(led03, LOW);
+    openHand = true;
+    } else {
+      if (openHand == true){
+        turnOffLed();
+        openHand = false;
+      }
+    }
     if (z > 0 && s08 < exception) {
       dxl.positionPGain(TARGET_ID1, 1);
       dxl.positionPGain(TARGET_ID2, 1);
@@ -233,6 +239,18 @@ void slow() { //条件がONの時、スローにする。ただし腕が全開�
       dxl.torqueEnable(TARGET_ID6, false);
     }
   } else {
+    if (s08 < exception) { //腕が全開の時の数字
+    digitalWrite(led01, LOW);
+    digitalWrite(led02, HIGH);
+    digitalWrite(led03, LOW);
+    openHand = true;
+    }
+    else {
+      if (openHand == true){
+        turnOffLed();
+        openHand = false;
+      }
+    }
     if (z > 0 && s08 > exception) {
       dxl.positionPGain(TARGET_ID1, 1);
       dxl.positionPGain(TARGET_ID2, 1);
@@ -296,9 +314,12 @@ void demo() {
 }
 
 
-void writer(){
+void recordMotion(){
+
+  // Serial.println(mode); //10
   
-  if (mode < 10) {
+  if (0 < mode  && mode < 10) {
+    Serial.println("record");
     if (mode == 1) {
       // ファイルの作成とデータの書き込み
       file = SPIFFS.open("/test1.txt", FILE_WRITE);
@@ -397,6 +418,8 @@ void writer(){
 
       Serial1.write(0);
 
+      Serial.print(mode);
+      Serial.print(" ");
       Serial.print("レコード中 = ");
       Serial.print(i); Serial.print(" : ");
       Serial.print(targetPos01); Serial.print(", ");
@@ -429,10 +452,15 @@ void writer(){
 
     }
     file.close();
+    
+    turnOffLed();
+    mode = 10;
   }
+
+  
 }
 
-void reader(){
+void playMotion(){
 
   if (mode > 10){
 
@@ -617,8 +645,10 @@ void reader(){
     }
 
     turnOffLed();
+    mode = 10;
 
   }
+
 
 }
 
@@ -632,8 +662,8 @@ void audioLoop(){
   
   
 
-  // Serial.print("audioMode = ");
-  // Serial.println(audioMode);
+  Serial.print("audioMode = ");
+  Serial.println(audioMode);
   
   if (audioMode == 1){
     digitalWrite(led01, HIGH);
@@ -696,7 +726,7 @@ void audioLoop(){
   }
 
   if (mode > 10){
-    reader();
+    playMotion();
   }
 
 }
@@ -805,10 +835,11 @@ void loop(){
   readSwitchState();
 
   if (audioMode > 0){
+    // Serial.print("audioLoop");
     audioLoop();
   } else {
 
-    // Serial.print("audioMode = ");
+    // Serial.print("audioMode mainLoop = ");
     // Serial.println(audioMode);
 
     Pgain_on();
@@ -833,29 +864,35 @@ void loop(){
       turnOnAllLed();
       delay(500);
     }
-
-
+    
+    // Serial.print("mode beforeRecordMotion : ");
+    // Serial.println(mode);
 
     if (sw01State == LOW && mode == 0){
       mode = 1;
       turnOnLed(led01);
+      Serial.print("record 1");
     } else if (sw02State == LOW && mode == 0){
       mode = 2;
       turnOnLed(led02);
+      Serial.print("record 2");
     } else if (sw03State == LOW && mode == 0){
       mode = 3;
       turnOnLed(led03);
+      Serial.print("record 3");
     } else if (sw04State == LOW && mode == 0){
       mode = 4;
       turnOnLed(led04);
+      Serial.print("record 4");
     } else if (sw05State == LOW && mode == 0){
       mode = 5;
       turnOnLed(led05);
+      Serial.print("record 5");
     }
-    Serial.print(mode);
-    writer();
-    turnOffLed();
-    mode = 10;
+    // Serial.print("mode afterRecordMotion : ");
+    // Serial.println(mode);
+    recordMotion();
+    
 
 
 
@@ -879,7 +916,7 @@ void loop(){
     //   }
 
     //   Serial.print(mode);
-    //   writer();
+    //   recordMotion();
     //   turnOffLed();
     //   mode = 10;
       
@@ -900,19 +937,22 @@ void loop(){
     } else if ((sw05State == LOW && mode == 10) || receivedChar == 53){ //ASCII 5
       mode = 15;
     }
-    turnOffLed();
-    reader();
-    mode = 10;
+    // Serial.print("mode afterPlayMotion : ");
+    // Serial.println(mode);
+    playMotion();
+    
     receivedChar = 0;
 
-    // dxl.torqueEnable(TARGET_ID1, true);
-    // dxl.torqueEnable(TARGET_ID2, true);
-    // dxl.torqueEnable(TARGET_ID3, true);
-    // dxl.torqueEnable(TARGET_ID4, true);
-    // dxl.torqueEnable(TARGET_ID5, true);
-    // dxl.torqueEnable(TARGET_ID6, true);
-    // dxl.torqueEnable(TARGET_ID7, true);
-    // dxl.torqueEnable(TARGET_ID8, true);
+    if (openHand == false){
+      dxl.torqueEnable(TARGET_ID1, true);
+      dxl.torqueEnable(TARGET_ID2, true);
+      // dxl.torqueEnable(TARGET_ID3, true);
+      dxl.torqueEnable(TARGET_ID4, true);
+      // dxl.torqueEnable(TARGET_ID5, true);
+      // dxl.torqueEnable(TARGET_ID6, true);
+      // dxl.torqueEnable(TARGET_ID7, true);
+      // dxl.torqueEnable(TARGET_ID8, true);
+    }
 
   }
 }
