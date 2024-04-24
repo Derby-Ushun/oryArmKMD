@@ -14,7 +14,7 @@ BluetoothSerial SerialBT;
 
 
 // ---- S/W Version ------------------
-#define VERSION_NUMBER  "Ver. 0.5.0"
+#define VERSION_NUMBER  "Ver. 0.5.1"
 // -----------------------------------
 
 
@@ -943,14 +943,16 @@ void loop(){
     
     receivedChar = 0;
 
-    // dxl.torqueEnable(TARGET_ID1, true);
-    // dxl.torqueEnable(TARGET_ID2, true);
-    // dxl.torqueEnable(TARGET_ID3, true);
-    // dxl.torqueEnable(TARGET_ID4, true);
-    // dxl.torqueEnable(TARGET_ID5, true);
-    // dxl.torqueEnable(TARGET_ID6, true);
-    // dxl.torqueEnable(TARGET_ID7, true);
-    // dxl.torqueEnable(TARGET_ID8, true);
+    if (openHand == false){
+      dxl.torqueEnable(TARGET_ID1, true);
+      dxl.torqueEnable(TARGET_ID2, true);
+      // dxl.torqueEnable(TARGET_ID3, true);
+      dxl.torqueEnable(TARGET_ID4, true);
+      // dxl.torqueEnable(TARGET_ID5, true);
+      // dxl.torqueEnable(TARGET_ID6, true);
+      // dxl.torqueEnable(TARGET_ID7, true);
+      // dxl.torqueEnable(TARGET_ID8, true);
+    }
 
   }
 }
