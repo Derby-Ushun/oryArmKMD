@@ -737,7 +737,7 @@ void setup(){
   DYNAMIXEL_SERIAL.begin(115200);
   dxl.attach(Serial2, 115200);
   Serial.begin(115200);
-  SerialBT.begin("CartOryArm"); // Bluetooth device name
+  SerialBT.begin("OryArm-01"); // Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
 
   pinMode(led01, OUTPUT);
