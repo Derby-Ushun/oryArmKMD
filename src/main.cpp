@@ -10,13 +10,13 @@
 
 #define DYNAMIXEL_SERIAL Serial2
 
-#define DYNAMIXEL_SERIAL_BAUDRATE 1000000
+#define DYNAMIXEL_SERIAL_BAUDRATE 115200
 
 BluetoothSerial SerialBT;
 
 
 // ---- S/W Version ------------------
-#define VERSION_NUMBER  "Ver. 0.5.2"
+#define VERSION_NUMBER  "Ver. 0.5.3"
 // -----------------------------------
 
 
