@@ -10,6 +10,8 @@
 
 #define DYNAMIXEL_SERIAL Serial2
 
+#define DYNAMIXEL_SERIAL_BAUDRATE 1000000
+
 BluetoothSerial SerialBT;
 
 
@@ -734,7 +736,7 @@ void audioLoop(){
 
 
 void setup(){
-  DYNAMIXEL_SERIAL.begin(115200);
+  DYNAMIXEL_SERIAL.begin(DYNAMIXEL_SERIAL_BAUDRATE);
   dxl.attach(Serial2, 115200);
   Serial.begin(115200);
   SerialBT.begin("OryArm-01"); // Bluetooth device name
