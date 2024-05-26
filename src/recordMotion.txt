@@ -1,0 +1,74 @@
+for (int i = 0; i < numRecords; i++) {
+
+      //カウントダウン機能
+      if (i > numRecords - int(numRecords * 4 / 5))digitalWrite(led05, LOW);
+      if (i > numRecords - int(numRecords * 3 / 5))digitalWrite(led04, LOW);
+      if (i > numRecords - int(numRecords * 2 / 5))digitalWrite(led03, LOW);
+      if (i > numRecords - int(numRecords / 5))digitalWrite(led02, LOW);
+
+      int ii = numRecords - i;
+
+      if (ii > 30 && ii < 33)digitalWrite(led01, LOW);
+      if (ii > 27 && ii < 30)digitalWrite(led01, HIGH);
+      if (ii > 24 && ii < 27)digitalWrite(led01, LOW);
+      if (ii > 19 && ii < 24)digitalWrite(led01, HIGH);
+      if (ii > 16 && ii < 19)digitalWrite(led01, LOW);
+      if (ii > 13 && ii < 16)digitalWrite(led01, HIGH);
+      if (ii > 10 && ii < 13)digitalWrite(led01, LOW);
+
+      if (ii < 10) {
+        digitalWrite(led01, HIGH); digitalWrite(led02, HIGH); digitalWrite(led03, HIGH);
+        digitalWrite(led04, HIGH); digitalWrite(led05, HIGH);
+      }
+      if (ii < 2) {
+        digitalWrite(led01, LOW); digitalWrite(led02, LOW); digitalWrite(led03, LOW);
+        digitalWrite(led04, LOW); digitalWrite(led05, LOW);
+      }
+
+      int de = 6; delay(de);
+      targetPos01 = dxl.presentPosition(TARGET_ID1); delay(de);
+      targetPos02 = dxl.presentPosition(TARGET_ID2); delay(de);
+      targetPos03 = dxl.presentPosition(TARGET_ID3); delay(de);
+      targetPos04 = dxl.presentPosition(TARGET_ID4); delay(de);
+      targetPos05 = dxl.presentPosition(TARGET_ID5); delay(de);
+      targetPos06 = dxl.presentPosition(TARGET_ID6); delay(de);
+      targetPos07 = dxl.presentPosition(TARGET_ID7); delay(de);
+      targetPos08 = dxl.presentPosition(TARGET_ID8);
+
+      //Serial.print("timer = ");  Serial.println(t);
+
+      Serial1.write(0);
+
+      Serial.print(mode);
+      Serial.print(" ");
+      Serial.print("レコード中 = ");
+      Serial.print(i); Serial.print(" : ");
+      Serial.print(targetPos01); Serial.print(", ");
+      Serial.print(targetPos02); Serial.print(", ");
+      Serial.print(targetPos03); Serial.print(", ");
+      Serial.print(targetPos04); Serial.print(", ");
+      Serial.print(targetPos05); Serial.print(", ");
+      Serial.print(targetPos06); Serial.print(", ");
+      Serial.print(targetPos07); Serial.print(", ");
+      Serial.println(targetPos08);
+
+      //レコード書き出し
+      file.print(targetPos01);
+      file.print(",");
+      file.print(targetPos02);
+      file.print(",");
+      file.print(targetPos03);
+      file.print(",");
+      file.print(targetPos04);
+      file.print(",");
+      file.print(targetPos05);
+      file.print(",");
+      file.print(targetPos06);
+      file.print(",");
+      file.print(targetPos07);
+      file.print(",");
+      file.print(targetPos08);
+      file.print(",");
+      file.println(0);
+
+    }

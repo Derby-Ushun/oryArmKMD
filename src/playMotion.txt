@@ -1,0 +1,85 @@
+for (int i = 0; i < numRecords; i++) {
+
+        int ss1 = values[i * number];
+        int ss2 = values[i * number + 1];
+        int ss3 = values[i * number + 2];
+        int ss4 = values[i * number + 3];
+        int ss5 = values[i * number + 4];
+        int ss6 = values[i * number + 5];
+        int ss7 = values[i * number + 6];
+        int ss8 = values[i * number + 7];
+
+        // delay(5);
+        // Serial.print(z);
+        Serial.print("フレーム ");
+        Serial.print(i + 1);
+        Serial.println(": ");
+        // Serial.print("目標 = ");
+        // Serial.print(ss1); Serial.print(", ");
+        // Serial.print(ss2); Serial.print(", ");
+        // Serial.print(ss3); Serial.print(", ");
+        // Serial.print(ss4); Serial.print(", ");
+        // Serial.print(ss5); Serial.print(", ");
+        // Serial.print(ss6); Serial.print(", ");
+        // Serial.print(ss7); Serial.print(", ");
+        // Serial.print(ss8); Serial.print(" :");
+        Serial.println(mode);
+
+        //実測値計測
+        int de = 2; delay(de);
+        s1 = dxl.presentPosition(TARGET_ID1); delay(de);
+        s2 = dxl.presentPosition(TARGET_ID2); delay(de);
+        s3 = dxl.presentPosition(TARGET_ID3); delay(de);
+        s4 = dxl.presentPosition(TARGET_ID4); delay(de);
+        s5 = dxl.presentPosition(TARGET_ID5); delay(de);
+        s6 = dxl.presentPosition(TARGET_ID6); delay(de);
+        s7 = dxl.presentPosition(TARGET_ID7); delay(de);
+        s8 = dxl.presentPosition(TARGET_ID8);
+
+        // Serial.print("実測 = ");
+        // Serial.print(s1); Serial.print(", ");
+        // Serial.print(s2); Serial.print(", ");
+        // Serial.print(s3); Serial.print(", ");
+        // Serial.print(s4); Serial.print(", ");
+        // Serial.print(s5); Serial.print(", ");
+        // Serial.print(s6); Serial.print(", ");
+        // Serial.print(s7); Serial.print(", ");
+        // Serial.println(s8);
+
+        Serial.print("差分 = ");
+        Serial.print(ss1 - s1); Serial.print(", ");
+        Serial.print(ss2 - s2); Serial.print(", ");
+        Serial.print(ss3 - s3); Serial.print(", ");
+        Serial.print(ss4 - s4); Serial.print(", ");
+        Serial.print(ss5 - s5); Serial.print(", ");
+        Serial.print(ss6 - s6); Serial.print(", ");
+        Serial.print(ss7 - s7); Serial.print(", ");
+        Serial.println(ss8 - s8);
+
+        
+        
+        sw00State = digitalRead(sw00);
+        if (abs(ss1 - s1) > s1diference || abs(ss2 - s2) > s2diference || abs(ss4 - s4) > s4diference || sw00 == LOW) {
+          digitalWrite(led01, HIGH); digitalWrite(led02, LOW); digitalWrite(led03, LOW);
+          digitalWrite(led04, LOW); digitalWrite(led05, HIGH);
+          delay(200);
+          digitalWrite(led01, LOW); digitalWrite(led05, LOW);
+          mode = 0;
+          break;
+        }
+
+        range(s1, ran1);
+        range(s2, ran2);
+        range(s4, ran4);
+
+        //モータへ送信
+        dxl.goalPosition(TARGET_ID1, ss1);
+        dxl.goalPosition(TARGET_ID2, ss2);
+        dxl.goalPosition(TARGET_ID3, ss3);
+        dxl.goalPosition(TARGET_ID4, ss4);
+        dxl.goalPosition(TARGET_ID5, ss5);
+        dxl.goalPosition(TARGET_ID6, ss6);
+        dxl.goalPosition(TARGET_ID7, ss7);
+        dxl.goalPosition(TARGET_ID8, ss8 + 15);
+
+      }

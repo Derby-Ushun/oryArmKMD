@@ -1,6 +1,11 @@
 #include <Arduino.h>
 #include <Dynamixel.h>
 #include <SPIFFS.h>
+
+
+#include <TFT.hpp>
+
+
 #include "BluetoothSerial.h"
 
 
@@ -93,6 +98,7 @@ int z = 0; //フリーの時、落下防止に動きを遅くするフラグ
 int ran1, ran2, ran4 = 0;
 
 int s08 = 0; //腕の角度
+
 
 int mode = 10; //1~9:モーション録画, 11~19:モーション再生
 int audioMode = 0; //0:初期値, 
